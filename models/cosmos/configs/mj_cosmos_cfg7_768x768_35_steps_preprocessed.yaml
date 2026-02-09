@@ -1,0 +1,51 @@
+target: yt_tools.dataloader.IterableDataloader
+params:
+  name: flux
+  dataset:
+    target: yt_tools.yt_iterable_dataset.IterableYTDataset
+    params:
+      table: //home/yr/datasets/mj_cosmos_cfg7.0_768x768_35_steps_preprocessed
+      yt_proxy: hahn
+      buf_size: 128
+      preproc_workers: 4
+  preprocess:
+    - in_map:
+        image_bytes: image
+      target: yt_tools.processing.process_fns.decode_image_pipeline
+      out_map: image
+    - in_map:
+        arr_bytes: vit_l_14_text_embedding
+      params:
+        encoding: BUFFER
+      target: yt_tools.processing.process_fns.decode_embeddings_pipeline
+      out_map: 
+        - vit_l_14_text_embedding
+        - _
+    - in_map:
+        arr_bytes: vit_l_14_pooled_text_embedding
+      params:
+        encoding: BUFFER
+      target: yt_tools.processing.process_fns.decode_embeddings_pipeline
+      out_map: 
+        - vit_l_14_pooled_text_embedding
+        - _
+    - in_map:
+        arr_bytes: t5xxl_text_embedding
+      params:
+        encoding: BUFFER
+      target: yt_tools.processing.process_fns.decode_embeddings_pipeline
+      out_map: 
+        - t5xxl_text_embedding
+        - _
+    - in_map:
+        string: text
+      target: yt_tools.processing.process_fns.string_decode
+      out_map: text
+    
+  stackable:
+    - image
+  non_stackable:
+    - text
+    - vit_l_14_text_embedding
+    - vit_l_14_pooled_text_embedding
+    - t5xxl_text_embedding
