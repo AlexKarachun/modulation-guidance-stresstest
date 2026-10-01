@@ -3,6 +3,8 @@ import numpy as np
 import logging
 from typing import Any, Dict, Optional, Union
 from diffusers.models.modeling_outputs import Transformer2DModelOutput
+import torch.nn.functional as F
+
 
 USE_PEFT_BACKEND = False
 logger = logging.getLogger(__name__)
@@ -39,6 +41,7 @@ def forward_modulation_guidance(
         w=0.5,
         start_layer=0,
         end_layer=1000,
+        log=None,
 ) -> Union[torch.Tensor, Transformer2DModelOutput]:
     """
     The [`FluxTransformer2DModel`] forward method.
@@ -80,9 +83,16 @@ def forward_modulation_guidance(
             logger.warning(
                 "Passing `scale` via `joint_attention_kwargs` when not using the PEFT backend is ineffective."
             )
-
+            
+    if log is not None: log.append(dict())
+    
+    B = hidden_states.shape[0]
+    
     hidden_states = self.x_embedder(hidden_states)
     timestep = timestep.to(hidden_states.dtype) * 1000
+    
+    if log is not None: log[-1]['timestep'] = timestep.cpu()
+    
     if guidance is not None:
         guidance = guidance.to(hidden_states.dtype) * 1000
     else:
@@ -108,8 +118,45 @@ def forward_modulation_guidance(
         )
         temb_delta = temb_1 - temb_0
         temb_new = temb + w * temb_delta
+        
+        temb_mix = torch.zeros_like(temb_new)
+        
+        for j in range(B):
+            
+            if j % 4 == 0: temb_mix[j] = temb[j]
+            
+            if j % 4 == 1: temb_mix[j] = temb_new[j]
+            
+            if j % 4 == 2: temb_mix[j] = (temb_new[j] * torch.norm(temb[j], dtype=torch.float32) / torch.norm(temb_new[j], dtype=torch.float32)).to(dtype=temb.dtype)
+            
+            if j % 4 == 3: temb_mix[j] = (temb[j] * torch.norm(temb_new[j], dtype=torch.float32) / torch.norm(temb[j], dtype=torch.float32)).to(dtype=temb.dtype)
+            
+            
+            if j % 4 == 1:
+                if log is not None: log[-1][f'p={j - 1}:||x+-x-||'] = torch.norm(temb_delta[j].float(), dim=-1).cpu()
+        
+                cos_0 = F.cosine_similarity(temb_mix[j - 1].float(), temb_delta[j - 1].float(), dim=-1)
+                cos_1 = F.cosine_similarity(temb_mix[j].float(), temb_delta[j - 1].float(), dim=-1)
+                
+                cos_rad_0 = torch.acos(cos_0.float().clamp(-1, 1)).cpu()
+                cos_rad_1 = torch.acos(cos_1.float().clamp(-1, 1)).cpu()
+                
+                
+                if log is not None: log[-1][f'p={j - 1}:angle(x,x+-x-)'] = cos_rad_0
+                if log is not None: log[-1][f'p={j - 1}:angle(x*,x+-x-)'] = cos_rad_1    
+                
+                
+        # if log is not None: log[-1]['temb_mix'] = temb_mix.float().cpu()
+        if log is not None: log[-1]['norm(temb_mix,dim=-1)'] = torch.norm(temb_mix, dtype=torch.float32, dim=-1).cpu()
+        
+        
+        
+
+        
+        
+        
     else:
-        temb_new = temb
+        temb_mix = temb
     encoder_hidden_states = self.context_embedder(encoder_hidden_states)
 
 
@@ -147,10 +194,10 @@ def forward_modulation_guidance(
 
         else:
             if global_index_block >= start_layer and global_index_block <= end_layer:
-                _ = temb_new
+                _ = temb_mix
             else:
                 _ = temb
-                
+                            
             encoder_hidden_states, hidden_states = block(
                 hidden_states=hidden_states,
                 encoder_hidden_states=encoder_hidden_states,
@@ -183,7 +230,7 @@ def forward_modulation_guidance(
 
         else:
             if global_index_block >= start_layer and global_index_block <= end_layer:
-                _ = temb_new
+                _ = temb_mix
             else:
                 _ = temb
 
