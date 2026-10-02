@@ -1,0 +1,17 @@
+# Generation environment: main.py, models/flux_schnell.py, test.ipynb, make_dataset.ipynb
+# Used for the coco5000x5 run with Python 3.14 (conda-forge) on CUDA 13.
+#   pip install -r requirements.txt
+# For the metrics (metrics.py) use the separate environment from requirements-metrics.txt:
+# HPSv3 needs transformers==4.45.2, which is incompatible with this one.
+torch==2.14.1
+diffusers==0.40.0
+transformers==5.18.0
+accelerate==1.15.0
+safetensors==0.8.0
+huggingface_hub==1.33.0
+numpy==2.5.3
+pandas==3.0.6
+pillow==12.3.0
+tqdm==4.70.0
+ipython==9.17.1
+ipykernel==7.4.0

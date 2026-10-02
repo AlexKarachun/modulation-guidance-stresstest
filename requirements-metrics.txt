@@ -1,0 +1,41 @@
+# Metrics environment: metrics.py, run_metrics.sh (CLIP, PickScore, ImageReward, HPSv3).
+# Separate from requirements.txt: HPSv3 pins transformers==4.45.2. Python 3.11, CUDA 12.8 wheels.
+#
+#   uv venv /venv/metrics --python 3.11
+#   VIRTUAL_ENV=/venv/metrics uv pip install --index-strategy unsafe-best-match -r requirements-metrics.txt
+#   # hpsv3 and image-reward pin conflicting deps (deepspeed, timm==0.6.13) that are not needed for inference:
+#   VIRTUAL_ENV=/venv/metrics uv pip install --no-deps hpsv3==1.0.0 image-reward==1.5
+#   # flash-attn: without it HPSv3 (Qwen2-VL) vision attention OOMs at batch 32; prebuilt wheel for torch 2.7 / py3.11:
+#   VIRTUAL_ENV=/venv/metrics uv pip install --no-deps https://github.com/Dao-AILab/flash-attention/releases/download/v2.8.3/flash_attn-2.8.3+cu12torch2.7cxx11abiTRUE-cp311-cp311-linux_x86_64.whl
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.7.1
+torchvision==0.22.1
+transformers==4.45.2
+trl==0.11.4
+accelerate==1.15.0
+peft==0.21.2
+diffusers==0.31.0
+datasets==5.0.1
+huggingface_hub==0.36.2
+safetensors==0.8.0
+# CLIP / PickScore
+open_clip_torch==2.32.0
+ftfy==6.3.1
+# ImageReward runtime deps (installed itself with --no-deps, see above)
+clip @ git+https://github.com/openai/CLIP.git
+timm==0.9.16
+fairscale==0.4.13
+# HPSv3 runtime deps (installed itself with --no-deps, see above)
+qwen-vl-utils==0.0.14
+omegaconf==2.3.1
+einops==0.8.2
+fire==0.7.1
+pyyaml==6.0.3
+matplotlib==3.11.2
+tensorboard==2.21.0
+opencv-python-headless==4.11.0.86
+# common
+numpy==1.26.4
+pandas==3.0.6
+pillow==12.3.0
+tqdm==4.70.1
