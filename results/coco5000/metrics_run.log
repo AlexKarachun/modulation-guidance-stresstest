@@ -1,0 +1,209 @@
+Fri Oct  2 19:44:42 UTC 2026 main.py finished, 25000 pngs
+Fri Oct  2 19:44:42 UTC 2026 light metrics
+INFO:root:Loaded hf-hub:laion/CLIP-ViT-H-14-laion2B-s32B-b79K model config.
+INFO:root:Loading pretrained hf-hub:laion/CLIP-ViT-H-14-laion2B-s32B-b79K weights (/workspace/.hf_home/hub/models--laion--CLIP-ViT-H-14-laion2B-s32B-b79K/snapshots/1c2b8495b28150b8a4922ee1c8edee224c284c0c/open_clip_model.safetensors).
+INFO:root:Loaded hf-hub:laion/CLIP-ViT-bigG-14-laion2B-39B-b160k model config.
+INFO:root:Loading pretrained hf-hub:laion/CLIP-ViT-bigG-14-laion2B-39B-b160k weights (/workspace/.hf_home/hub/models--laion--CLIP-ViT-bigG-14-laion2B-39B-b160k/snapshots/743c27bd53dfe508a0ade0f50698f99b39d03bec/open_clip_model.safetensors).
+load checkpoint from /root/.cache/ImageReward/ImageReward.pt
+checkpoint loaded
+models loaded in 63s; GPU mem 12.2 GB
+light: 256/25000  9.0 img/s
+light: 2816/25000  33.4 img/s
+light: 5376/25000  38.7 img/s
+light: 7936/25000  41.6 img/s
+light: 10496/25000  43.2 img/s
+light: 13056/25000  44.3 img/s
+light: 15616/25000  45.0 img/s
+light: 18176/25000  45.5 img/s
+light: 20736/25000  46.0 img/s
+light: 23296/25000  46.3 img/s
+saved 25000 rows -> /workspace/modulation-guidance-stresstest/results/coco5000/light.csv in 539s
+Fri Oct  2 19:54:57 UTC 2026 hpsv3
+Flash Attention is not installed. Falling to SDPA.
+hpsv3: 0 done, 25000 to go
+`Qwen2VLRotaryEmbedding` can now be fully parameterized by passing the model config through the `config` argument. All other arguments will be removed in v4.46
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards:  20%|██        | 1/5 [00:00<00:00,  4.19it/s]Loading checkpoint shards:  40%|████      | 2/5 [00:00<00:00,  5.17it/s]Loading checkpoint shards:  60%|██████    | 3/5 [00:00<00:00,  5.63it/s]Loading checkpoint shards:  80%|████████  | 4/5 [00:00<00:00,  5.73it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00,  6.01it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00,  5.67it/s]
+Some weights of Qwen2VLRewardModelBT were not initialized from the model checkpoint at Qwen/Qwen2-VL-7B-Instruct and are newly initialized: ['rm_head.0.bias', 'rm_head.0.weight', 'rm_head.3.bias', 'rm_head.3.weight', 'rm_head.5.bias', 'rm_head.5.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+Traceback (most recent call last):
+  File "/workspace/modulation-guidance-stresstest/metrics.py", line 248, in <module>
+    {'light': run_light, 'hpsv3': run_hpsv3, 'analyze': run_analyze}[args.stage](args)
+  File "/venv/metrics/lib/python3.11/site-packages/torch/utils/_contextlib.py", line 116, in decorate_context
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/modulation-guidance-stresstest/metrics.py", line 192, in run_hpsv3
+    mu = inf.model(return_dict=True, **enc)['logits'][:, 0].float().tolist()
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/metrics/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/metrics/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/metrics/lib/python3.11/site-packages/hpsv3/model/qwen2vl_trainer.py", line 152, in forward
+    image_embeds = self.visual(pixel_values, grid_thw=image_grid_thw)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/metrics/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/metrics/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/metrics/lib/python3.11/site-packages/transformers/models/qwen2_vl/modeling_qwen2_vl.py", line 1128, in forward
+    hidden_states = blk(hidden_states, cu_seqlens=cu_seqlens, rotary_pos_emb=rotary_pos_emb)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/metrics/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/metrics/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/metrics/lib/python3.11/site-packages/transformers/models/qwen2_vl/modeling_qwen2_vl.py", line 431, in forward
+    hidden_states = hidden_states + self.attn(
+                                    ^^^^^^^^^^
+  File "/venv/metrics/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1751, in _wrapped_call_impl
+    return self._call_impl(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/metrics/lib/python3.11/site-packages/torch/nn/modules/module.py", line 1762, in _call_impl
+    return forward_call(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/venv/metrics/lib/python3.11/site-packages/transformers/models/qwen2_vl/modeling_qwen2_vl.py", line 404, in forward
+    attn_output = F.scaled_dot_product_attention(q, k, v, attention_mask, dropout_p=0.0)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+torch.OutOfMemoryError: CUDA out of memory. Tried to allocate 64.00 GiB. GPU 0 has a total capacity of 63.39 GiB of which 42.47 GiB is free. Including non-PyTorch memory, this process has 20.90 GiB memory in use. Of the allocated memory 20.22 GiB is allocated by PyTorch, and 350.22 MiB is reserved by PyTorch but unallocated. If reserved but unallocated memory is large try setting PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True to avoid fragmentation.  See documentation for Memory Management  (https://pytorch.org/docs/stable/notes/cuda.html#environment-variables)
+Fri Oct  2 19:56:01 UTC 2026 analyze
+# Metrics, coco5000 (5000 prompts)
+
+Paper, Table 2, FLUX schnell: PickScore 22.9 -> 23.1, CLIP 35.6 -> 35.8, IR(x10) 10.2 -> 11.0, HPSv3 11.3 -> 11.8 (Aesthetics)
+
+## Means
+
+| cond | pickscore | clip_L14 | clip_H14 | clip_bigG14 | imagereward_x10 |
+|---|---|---|---|---|---|
+| 0: x | 22.607 | 26.598 | 35.706 | 45.154 | 10.327 |
+| 1: x* | 22.804 | 26.612 | 35.708 | 45.256 | 11.012 |
+| 2: x* @ norm(x) | 22.696 | 26.806 | 35.417 | 44.966 | 10.830 |
+| 3: x @ norm(x*) | 22.626 | 26.609 | 35.793 | 45.241 | 10.255 |
+| 4: x, gate*1.03 | 22.601 | 26.590 | 35.628 | 45.084 | 10.341 |
+
+## Paired difference vs cond 0: mean [95% bootstrap CI over prompts], win rate %
+
+| cond | pickscore | clip_L14 | clip_H14 | clip_bigG14 | imagereward_x10 |
+|---|---|---|---|---|---|
+| 1: x* | +0.197 [+0.182, +0.213], 65% | +0.014 [-0.041, +0.067], 50% | +0.002 [-0.069, +0.072], 51% | +0.102 [+0.030, +0.171], 53% | +0.685 [+0.574, +0.803], 60% |
+| 2: x* @ norm(x) | +0.089 [+0.073, +0.107], 57% | +0.208 [+0.145, +0.267], 55% | -0.289 [-0.361, -0.210], 47% | -0.188 [-0.263, -0.113], 48% | +0.503 [+0.376, +0.634], 58% |
+| 3: x @ norm(x*) | +0.019 [+0.009, +0.029], 52% | +0.011 [-0.027, +0.047], 51% | +0.087 [+0.044, +0.130], 53% | +0.087 [+0.048, +0.129], 53% | -0.073 [-0.154, +0.006], 47% |
+| 4: x, gate*1.03 | -0.005 [-0.012, +0.001], 49% | -0.008 [-0.036, +0.019], 51% | -0.078 [-0.108, -0.049], 47% | -0.070 [-0.099, -0.042], 47% | +0.014 [-0.042, +0.068], 52% |
+
+Fri Oct  2 19:56:06 UTC 2026 ALL METRICS DONE
+hpsv3: 0 done, 25000 to go
+You are attempting to use Flash Attention 2.0 with a model not initialized on GPU. Make sure to move the model to GPU after initializing it on CPU with `model.to('cuda')`.
+You are attempting to use Flash Attention 2.0 without specifying a torch dtype. This might lead to unexpected behaviour
+`Qwen2VLRotaryEmbedding` can now be fully parameterized by passing the model config through the `config` argument. All other arguments will be removed in v4.46
+Loading checkpoint shards:   0%|          | 0/5 [00:00<?, ?it/s]Loading checkpoint shards:  20%|██        | 1/5 [00:00<00:01,  3.84it/s]Loading checkpoint shards:  40%|████      | 2/5 [00:00<00:00,  4.78it/s]Loading checkpoint shards:  60%|██████    | 3/5 [00:00<00:00,  5.16it/s]Loading checkpoint shards:  80%|████████  | 4/5 [00:00<00:00,  5.37it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00,  5.64it/s]Loading checkpoint shards: 100%|██████████| 5/5 [00:00<00:00,  5.29it/s]
+Some weights of Qwen2VLRewardModelBT were not initialized from the model checkpoint at Qwen/Qwen2-VL-7B-Instruct and are newly initialized: ['rm_head.0.bias', 'rm_head.0.weight', 'rm_head.3.bias', 'rm_head.3.weight', 'rm_head.5.bias', 'rm_head.5.weight']
+You should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.
+hpsv3: 32/25000  3.63 img/s
+hpsv3: 352/25000  8.41 img/s
+hpsv3: 672/25000  9.00 img/s
+hpsv3: 992/25000  9.21 img/s
+hpsv3: 1312/25000  9.31 img/s
+hpsv3: 1632/25000  9.37 img/s
+hpsv3: 1952/25000  9.41 img/s
+hpsv3: 2272/25000  9.43 img/s
+hpsv3: 2592/25000  9.45 img/s
+hpsv3: 2912/25000  9.46 img/s
+hpsv3: 3232/25000  9.47 img/s
+hpsv3: 3552/25000  9.48 img/s
+hpsv3: 3872/25000  9.49 img/s
+hpsv3: 4192/25000  9.49 img/s
+hpsv3: 4512/25000  9.50 img/s
+hpsv3: 4832/25000  9.51 img/s
+hpsv3: 5152/25000  9.51 img/s
+hpsv3: 5472/25000  9.52 img/s
+hpsv3: 5792/25000  9.52 img/s
+hpsv3: 6112/25000  9.52 img/s
+hpsv3: 6432/25000  9.52 img/s
+hpsv3: 6752/25000  9.52 img/s
+hpsv3: 7072/25000  9.53 img/s
+hpsv3: 7392/25000  9.53 img/s
+hpsv3: 7712/25000  9.53 img/s
+hpsv3: 8032/25000  9.53 img/s
+hpsv3: 8352/25000  9.53 img/s
+hpsv3: 8672/25000  9.53 img/s
+hpsv3: 8992/25000  9.54 img/s
+hpsv3: 9312/25000  9.54 img/s
+hpsv3: 9632/25000  9.54 img/s
+hpsv3: 9952/25000  9.54 img/s
+hpsv3: 10272/25000  9.54 img/s
+hpsv3: 10592/25000  9.54 img/s
+hpsv3: 10912/25000  9.54 img/s
+hpsv3: 11232/25000  9.54 img/s
+hpsv3: 11552/25000  9.54 img/s
+hpsv3: 11872/25000  9.54 img/s
+hpsv3: 12192/25000  9.54 img/s
+hpsv3: 12512/25000  9.54 img/s
+hpsv3: 12832/25000  9.54 img/s
+hpsv3: 13152/25000  9.54 img/s
+hpsv3: 13472/25000  9.54 img/s
+hpsv3: 13792/25000  9.55 img/s
+hpsv3: 14112/25000  9.55 img/s
+hpsv3: 14432/25000  9.55 img/s
+hpsv3: 14752/25000  9.54 img/s
+hpsv3: 15072/25000  9.54 img/s
+hpsv3: 15392/25000  9.54 img/s
+hpsv3: 15712/25000  9.54 img/s
+hpsv3: 16032/25000  9.55 img/s
+hpsv3: 16352/25000  9.55 img/s
+hpsv3: 16672/25000  9.55 img/s
+hpsv3: 16992/25000  9.55 img/s
+hpsv3: 17312/25000  9.54 img/s
+hpsv3: 17632/25000  9.54 img/s
+hpsv3: 17952/25000  9.55 img/s
+hpsv3: 18272/25000  9.55 img/s
+hpsv3: 18592/25000  9.55 img/s
+hpsv3: 18912/25000  9.55 img/s
+hpsv3: 19232/25000  9.55 img/s
+hpsv3: 19552/25000  9.54 img/s
+hpsv3: 19872/25000  9.55 img/s
+hpsv3: 20192/25000  9.55 img/s
+hpsv3: 20512/25000  9.55 img/s
+hpsv3: 20832/25000  9.55 img/s
+hpsv3: 21152/25000  9.55 img/s
+hpsv3: 21472/25000  9.55 img/s
+hpsv3: 21792/25000  9.55 img/s
+hpsv3: 22112/25000  9.55 img/s
+hpsv3: 22432/25000  9.55 img/s
+hpsv3: 22752/25000  9.55 img/s
+hpsv3: 23072/25000  9.55 img/s
+hpsv3: 23392/25000  9.55 img/s
+hpsv3: 23712/25000  9.55 img/s
+hpsv3: 24032/25000  9.55 img/s
+hpsv3: 24352/25000  9.55 img/s
+hpsv3: 24672/25000  9.55 img/s
+hpsv3: 24992/25000  9.55 img/s
+hpsv3: 25000/25000  9.55 img/s
+# Metrics, coco5000 (5000 prompts)
+
+Paper, Table 2, FLUX schnell: PickScore 22.9 -> 23.1, CLIP 35.6 -> 35.8, IR(x10) 10.2 -> 11.0, HPSv3 11.3 -> 11.8 (Aesthetics)
+
+## Means
+
+| cond | pickscore | clip_L14 | clip_H14 | clip_bigG14 | imagereward_x10 | hpsv3 |
+|---|---|---|---|---|---|---|
+| 0: x | 22.607 | 26.598 | 35.706 | 45.154 | 10.327 | 10.633 |
+| 1: x* | 22.804 | 26.612 | 35.708 | 45.256 | 11.012 | 11.249 |
+| 2: x* @ norm(x) | 22.696 | 26.806 | 35.417 | 44.966 | 10.830 | 11.313 |
+| 3: x @ norm(x*) | 22.626 | 26.609 | 35.793 | 45.241 | 10.255 | 10.401 |
+| 4: x, gate*1.03 | 22.601 | 26.590 | 35.628 | 45.084 | 10.341 | 10.688 |
+
+## Paired difference vs cond 0: mean [95% bootstrap CI over prompts], win rate %
+
+| cond | pickscore | clip_L14 | clip_H14 | clip_bigG14 | imagereward_x10 | hpsv3 |
+|---|---|---|---|---|---|---|
+| 1: x* | +0.197 [+0.182, +0.213], 65% | +0.014 [-0.041, +0.067], 50% | +0.002 [-0.069, +0.072], 51% | +0.102 [+0.030, +0.171], 53% | +0.685 [+0.574, +0.803], 60% | +0.616 [+0.569, +0.662], 66% |
+| 2: x* @ norm(x) | +0.089 [+0.073, +0.105], 57% | +0.208 [+0.148, +0.265], 55% | -0.289 [-0.366, -0.212], 47% | -0.188 [-0.257, -0.113], 48% | +0.503 [+0.377, +0.624], 58% | +0.681 [+0.630, +0.734], 67% |
+| 3: x @ norm(x*) | +0.019 [+0.009, +0.029], 52% | +0.011 [-0.023, +0.048], 51% | +0.087 [+0.045, +0.131], 53% | +0.087 [+0.045, +0.127], 53% | -0.073 [-0.155, +0.008], 47% | -0.232 [-0.264, -0.201], 39% |
+| 4: x, gate*1.03 | -0.005 [-0.012, +0.001], 49% | -0.008 [-0.035, +0.018], 51% | -0.078 [-0.106, -0.047], 47% | -0.070 [-0.100, -0.042], 47% | +0.014 [-0.039, +0.069], 52% | +0.055 [+0.033, +0.078], 54% |
+
+Fri Oct  2 20:41:28 UTC 2026 ALL METRICS DONE
