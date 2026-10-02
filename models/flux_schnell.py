@@ -22,6 +22,37 @@ def encode_prompt(pipe, prompt):
     return pooled_prompt_embeds
 
 
+def register_gate_scaling(transformer, factor, start_layer=0, n_cond=5, cond=4):
+    """
+    Multiply the gate outputs of AdaLN modulation by `factor` for batch rows with
+    `row % n_cond == cond`, in every block whose global index is >= start_layer.
+    Double blocks: gate_msa, gate_mlp of both image and text streams; single blocks: gate.
+    Returns hook handles (call .remove() on them to undo).
+    """
+    def make_hook(n_chunks, gate_ids):
+        def hook(module, inputs, output):
+            rows = (torch.arange(output.shape[0], device=output.device) % n_cond == cond)[:, None]
+            chunks = list(output.chunk(n_chunks, dim=1))
+            for g in gate_ids:
+                scaled = (chunks[g].float() * factor).to(chunks[g].dtype)
+                chunks[g] = torch.where(rows, scaled, chunks[g])
+            return torch.cat(chunks, dim=1)
+        return hook
+
+    handles = []
+    n_double = len(transformer.transformer_blocks)
+    for i, block in enumerate(transformer.transformer_blocks):
+        if i >= start_layer:
+            # chunks: shift_msa, scale_msa, gate_msa, shift_mlp, scale_mlp, gate_mlp
+            handles.append(block.norm1.linear.register_forward_hook(make_hook(6, (2, 5))))
+            handles.append(block.norm1_context.linear.register_forward_hook(make_hook(6, (2, 5))))
+    for i, block in enumerate(transformer.single_transformer_blocks):
+        if n_double + i >= start_layer:
+            # chunks: shift, scale, gate
+            handles.append(block.norm.linear.register_forward_hook(make_hook(3, (2,))))
+    return handles
+
+
 def forward_modulation_guidance(
         self,
         hidden_states: torch.Tensor,
@@ -42,6 +73,7 @@ def forward_modulation_guidance(
         start_layer=0,
         end_layer=1000,
         log=None,
+        n_cond=4,
 ) -> Union[torch.Tensor, Transformer2DModelOutput]:
     """
     The [`FluxTransformer2DModel`] forward method.
@@ -123,16 +155,19 @@ def forward_modulation_guidance(
         
         for j in range(B):
             
-            if j % 4 == 0: temb_mix[j] = temb[j]
-            
-            if j % 4 == 1: temb_mix[j] = temb_new[j]
-            
-            if j % 4 == 2: temb_mix[j] = (temb_new[j] * torch.norm(temb[j], dtype=torch.float32) / torch.norm(temb_new[j], dtype=torch.float32)).to(dtype=temb.dtype)
-            
-            if j % 4 == 3: temb_mix[j] = (temb[j] * torch.norm(temb_new[j], dtype=torch.float32) / torch.norm(temb[j], dtype=torch.float32)).to(dtype=temb.dtype)
-            
-            
-            if j % 4 == 1:
+            if j % n_cond == 0: temb_mix[j] = temb[j]
+
+            if j % n_cond == 1: temb_mix[j] = temb_new[j]
+
+            if j % n_cond == 2: temb_mix[j] = (temb_new[j] * torch.norm(temb[j], dtype=torch.float32) / torch.norm(temb_new[j], dtype=torch.float32)).to(dtype=temb.dtype)
+
+            if j % n_cond == 3: temb_mix[j] = (temb[j] * torch.norm(temb_new[j], dtype=torch.float32) / torch.norm(temb[j], dtype=torch.float32)).to(dtype=temb.dtype)
+
+            # x unchanged here; its gates are scaled by register_gate_scaling
+            if j % n_cond == 4: temb_mix[j] = temb[j]
+
+
+            if j % n_cond == 1:
                 if log is not None: log[-1][f'p={j - 1}:||x+-x-||'] = torch.norm(temb_delta[j].float(), dim=-1).cpu()
         
                 cos_0 = F.cosine_similarity(temb_mix[j - 1].float(), temb_delta[j - 1].float(), dim=-1)
