@@ -3,25 +3,32 @@ import types
 import torch
 from functools import partial
 from diffusers import FluxPipeline
+import diffusers
 from models.flux_schnell import encode_prompt, forward_modulation_guidance
 from pathlib import Path
+import pandas as pd
+from tqdm import tqdm
+import pickle
+from concurrent.futures import ThreadPoolExecutor
+import json
+
 
 # Import a model
-pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell", torch_dtype=torch.bfloat16).to('cuda')
-
-
+pipe = FluxPipeline.from_pretrained("black-forest-labs/FLUX.1-schnell", dtype=torch.bfloat16).to('cuda')
+pipe.set_progress_bar_config(disable=True)
 
 
 # Define the hyperparametrs: 
 # 1. Prompts: Generation prompt, positive and negative prompts
 # 2. Modulation guidance strength (w)
 # 3. Guidance start layer
-prompt = 'A wolf on a plain background'
 prompt_positive = "Ultra-detailed, photorealistic, cinematic"
 prompt_negative = "Low-res, flat, cartoonish"
 
 w = 3
 start_layer = 5
+
+
 
 # Get pooled CLIP embeddings
 clip_positive = encode_prompt(pipe=pipe, prompt=prompt_positive)
@@ -39,22 +46,112 @@ pipe.transformer.forward = types.MethodType(forward_modulation_guidance_partial,
 
 
 
-# Run generation
-seed = 0
-images = pipe([prompt] * 4,
-              guidance_scale=0.0,
-              num_inference_steps=4,
-              max_sequence_length=256,
-              generator=[torch.Generator("cpu").manual_seed(seed) for _ in range(4)],
-              output_type='pil').images
 
 
 
 
+df = pd.read_csv(
+    'dataset/coco5000.csv',
+    sep='|',
+    names=['idx', 'text']
+)
 
-# main_dir = Path('generations')
-# test_dir = main_dir / 'test'
-# test_dir.mkdir(parents=True, exist_ok=True)
+data = df.values.tolist()
 
-# for i, img in enumerate(images):
-#     img.save(test_dir / f"image_{i}.png")
+'''
+data = 
+[[0, 'A woman stands flying a kite with both hands.'],
+ [1, 'Many people on their bikes are near a pink vehicle.'],
+ [2, 'A man holds a huge remote control in a store.'],
+ [3, 'Little boys are playing t ball on a field.'],
+ [4, 'The reflection of a man in barbers chair getting a trim'],
+ [5, 'A group of girls on a field playing soccer'],
+...
+'''
+
+
+
+main_dir = Path('generations')
+save_dir = main_dir / 'coco5000'
+save_dir.mkdir(parents=True, exist_ok=True)
+
+with open(save_dir / 'config.json', 'w') as f:
+    
+    json.dump({
+        'p+': prompt_positive,
+        'p-': prompt_negative,
+        'w': w, 
+        'start_layer': start_layer,
+    }, 
+    fp=f,
+    indent=2,
+    ensure_ascii=False,
+    )
+    
+
+with ThreadPoolExecutor(max_workers=2) as saver:
+
+    idx = 0
+    for idx, prompt in tqdm(data, desc=f'{idx=}', position=0):
+        if all((save_dir / f"{idx}_{i}.png").exists() for i in range(4)):
+            continue
+
+        images = pipe([prompt] * 4,
+                    guidance_scale=0.0,
+                    num_inference_steps=4,
+                    max_sequence_length=256,
+                    generator=[torch.Generator("cpu").manual_seed(idx) for _ in range(4)],
+                    output_type='pil').images
+
+        
+
+        for i, img in enumerate(images):
+            saver.submit(img.save, save_dir / f"{idx}_{i}.png", compress_level=1)
+        
+        
+        with open(save_dir/'logs.pkl', 'ab') as f:
+            for item in forward_logger:
+                item['prompt_idx'] = idx
+                pickle.dump(item, file=f)
+        
+        forward_logger.clear()
+
+
+
+
+'''
+B=4 -> 12.2s per batch ~ 3s per img ~ 17h total
+
+cuncur
+B=4 -> 10.85s per batch ~ 2.7s per img ~ 15h total
+
+
+
+
+coco20 ~112M -> 27.4 gb total
+
+
+
+
+hf upload AlexKarachun/mod_stress generations/coco5000 . --repo-type dataset \
+    --every 10
+    
+
+hf upload AlexKarachun/mod_stress generations/coco5000 . --repo-type dataset 
+    
+
+    
+hf upload AlexKarachun/mod_stress generations/coco20 . --repo-type dataset \
+    --every 1
+    
+    
+hf upload AlexKarachun/mod_stress generations/coco20 . --repo-type dataset 
+
+    
+    
+до экспа
+- coco20 -> coco5000
+
+'''
+
+
